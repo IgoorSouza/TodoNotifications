@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,6 +29,7 @@ fun TaskDetailScreen(
 ) {
     val task = TaskRepository.getTaskById(taskId)
     var showDeleteDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     if (task == null) {
         onBackClick()
@@ -119,14 +121,6 @@ fun TaskDetailScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     DetailItem(
-                        label = "Status",
-                        value = if (task.isCompleted) "Concluída" else "Pendente",
-                        valueColor = if (task.isCompleted) Color(0xFF388E3C) else Color.Red,
-                        isDarkTheme = isDarkTheme
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    DetailItem(
                         label = "Horário Programado",
                         value = task.scheduledTime.ifBlank { "Não programado" },
                         valueColor = primaryColor,
@@ -149,7 +143,7 @@ fun TaskDetailScreen(
         DeleteConfirmationDialog(
             taskTitle = task.title,
             onConfirm = {
-                TaskRepository.removeTaskById(task.id)
+                TaskRepository.removeTaskById(context, task.id)
                 showDeleteDialog = false
                 onBackClick()
             },

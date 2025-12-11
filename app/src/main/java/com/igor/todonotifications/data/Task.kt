@@ -7,5 +7,4 @@ data class Task(
     val title: String,
     val scheduledTime: String,
     val description: String = "Nenhuma descrição fornecida.",
-    val isCompleted: Boolean = false
 )

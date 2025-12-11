@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -117,6 +118,7 @@ fun TaskCard(
     isDarkTheme: Boolean
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     val primaryColor = AppColors.primary(isDarkTheme)
     val textDarkColor = AppColors.textDark(isDarkTheme)
@@ -144,30 +146,20 @@ fun TaskCard(
                     .padding(end = 8.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(
-                        checked = task.isCompleted,
-                        onCheckedChange = { TaskRepository.toggleTaskCompletion(task) },
-                        colors = CheckboxDefaults.colors(checkedColor = primaryColor)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = task.title,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (task.isCompleted) AppColors.textSecondary(isDarkTheme) else textDarkColor,
-                        style = if (task.isCompleted) MaterialTheme.typography.bodyLarge.copy(
-                            textDecoration = TextDecoration.LineThrough
-                        ) else MaterialTheme.typography.bodyLarge
+                        color = textDarkColor,
+                        style = MaterialTheme.typography.bodyLarge
                     )
                 }
 
                 if (task.scheduledTime.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Horário: ${task.scheduledTime}",
                         fontSize = 12.sp,
                         color = AppColors.textSecondary(isDarkTheme),
-                        modifier = Modifier.padding(start = 40.dp)
                     )
                 }
             }
@@ -196,7 +188,7 @@ fun TaskCard(
         DeleteConfirmationDialog(
             taskTitle = task.title,
             onConfirm = {
-                TaskRepository.removeTaskById(task.id)
+                TaskRepository.removeTaskById(context, task.id)
                 showDeleteDialog = false
             },
             onDismiss = { showDeleteDialog = false },

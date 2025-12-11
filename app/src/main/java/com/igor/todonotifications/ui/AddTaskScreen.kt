@@ -1,5 +1,6 @@
 package com.igor.todonotifications.ui
 
+import android.app.TimePickerDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,11 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.igor.todonotifications.data.TaskRepository
 import com.igor.todonotifications.ui.theme.AppColors
+import java.util.Calendar
 
 @Composable
 fun AddTaskScreen(
@@ -29,6 +33,7 @@ fun AddTaskScreen(
     var description by remember { mutableStateOf("") }
     var scheduledTime by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     val primaryColor = AppColors.primary(isDarkTheme)
     val textDarkColor = AppColors.textDark(isDarkTheme)
@@ -114,29 +119,16 @@ fun AddTaskScreen(
                         )
                     )
 
-                    OutlinedTextField(
-                        value = scheduledTime,
-                        onValueChange = { scheduledTime = it },
-                        label = { Text("Horário Programado (HH:MM)") },
-                        singleLine = true,
-                        placeholder = { Text("Ex: 10:00") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = textDarkColor,
-                            unfocusedTextColor = textDarkColor,
-                            focusedLabelColor = primaryColor,
-                            unfocusedLabelColor = textDarkColor,
-                            focusedBorderColor = primaryColor,
-                            unfocusedBorderColor = textDarkColor.copy(alpha = 0.5f)
-                        )
+                    TimeInputField(
+                        scheduledTime = scheduledTime,
+                        onTimeSelected = { scheduledTime = it },
+                        isDarkTheme
                     )
 
                     OutlinedTextField(
                         value = description,
                         onValueChange = { description = it },
-                        label = { Text("Descrição (Opcional)") },
+                        label = { Text("Descrição") },
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(min = 100.dp)
@@ -156,6 +148,7 @@ fun AddTaskScreen(
                             if (title.isNotBlank() && scheduledTime.isNotBlank()) {
                                 isLoading = true
                                 TaskRepository.addTask(
+                                    context,
                                     title.trim(),
                                     description.trim(),
                                     scheduledTime.trim()
@@ -182,5 +175,76 @@ fun AddTaskScreen(
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimeInputField(
+    scheduledTime: String,
+    onTimeSelected: (String) -> Unit,
+    isDarkTheme: Boolean
+) {
+    var showTimePicker by remember { mutableStateOf(false) }
+
+    val primaryColor = AppColors.primary(isDarkTheme)
+    val textDarkColor = AppColors.textDark(isDarkTheme)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 12.dp)
+            .clickable { showTimePicker = true }
+    ) {
+        OutlinedTextField(
+            value = scheduledTime,
+            onValueChange = {},
+            readOnly = true,
+            enabled = false,
+            label = { Text("Horário Programado") },
+            singleLine = true,
+            placeholder = { Text("Ex: 10:00") },
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Timer,
+                    contentDescription = null,
+                    tint = primaryColor
+                )
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = textDarkColor,
+                disabledLabelColor = textDarkColor,
+                disabledBorderColor = textDarkColor.copy(alpha = 0.5f),
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+
+    if (showTimePicker) {
+        val timePickerState = rememberTimePickerState()
+
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val hour = timePickerState.hour
+                        val minute = timePickerState.minute
+                        onTimeSelected(String.format("%02d:%02d", hour, minute))
+                        showTimePicker = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) {
+                    Text("Cancelar")
+                }
+            },
+            text = {
+                TimePicker(state = timePickerState)
+            }
+        )
     }
 }
